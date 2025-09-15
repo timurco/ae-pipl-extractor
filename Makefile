@@ -11,7 +11,7 @@ build:
 
 # Test Rust version
 test: build
-	cargo run -- "/Users/timurko/Code/aescripts/AIColorMatch/plugin/generated/AIColorMatch.rsrc"
+	cargo run -- $(FILE)
 
 # Run Rust version
 run-rust: build
@@ -29,7 +29,7 @@ clean:
 help:
 	@echo "Available targets:"
 	@echo "  build      - Build Rust version"
-	@echo "  test       - Test Rust version"
+	@echo "  test       - Test Rust version (set FILE=path/to/file)"
 	@echo "  run-rust   - Run Rust version (set FILE=path/to/file)"
 	@echo "  run-python - Run Python version (set FILE=path/to/file)"
 	@echo "  clean      - Clean build artifacts"
