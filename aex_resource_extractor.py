@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Extract PIPL resources from Windows .aex files."""
+"""Extract PIPL resources from Windows .aex files.
 
-import sys
+This module is used as a library by `ae_pipl_extractor.py` to read PIPL
+properties from a Windows `.aex` plugin's resource section. Standalone CLI
+and extra analysis utilities were removed to keep the repository minimal.
+"""
+
 import struct
 from aex_analyzer import AexAnalyzer
 from pipl_types import PiplProperty
@@ -127,83 +131,4 @@ class AexResourceExtractor:
 
         return properties
 
-    def save_extracted_data(self, output_file: str):
-        """Save the raw PIPL data to a file for analysis."""
-        pipl_data = self._find_pipl_data_in_resources()
-        if pipl_data:
-            with open(output_file, 'wb') as f:
-                f.write(pipl_data)
-            print(f"Saved {len(pipl_data)} bytes of PIPL data to {output_file}")
-        else:
-            print("No PIPL data found to save")
-
-    def extract_from_aex(aex_file: str):
-        """Extract PIPL properties from AEX file and analyze them."""
-        print("=" * 80)
-        print(f"EXTRACTING PIPL FROM: {aex_file}")
-        print("=" * 80)
-
-        try:
-            extractor = AexResourceExtractor(aex_file)
-            properties = extractor.extract_pipl_properties()
-
-            if properties:
-                print(f"\nExtracted {len(properties)} PIPL properties:")
-
-                # Use our existing analyzer
-                from config_analyzer import analyze_pipl_file
-                from r_generator import RGenerator
-
-                # Create a temporary wrapper to analyze extracted properties
-                class PropertyWrapper:
-                    def __init__(self, props):
-                        self.properties = props
-
-                    def parse_pipl_properties(self):
-                        return self.properties
-
-                # Analyze the properties
-                try:
-                    generator = RGenerator(properties)
-                    summary = generator.get_summary()
-
-                    print(f"\n--- EXTRACTED PLUGIN INFO ---")
-                    print(f"Plugin Name: {summary['plugin_name']}")
-                    print(f"Category: {summary['category']}")
-                    print(f"Unique ID: {summary['unique_id']}")
-                    print(f"Entry Point: {summary['entry_point']}")
-                    print(f"Total Properties: {summary['total_properties']}")
-
-                    print(f"\n--- PROPERTY DETAILS ---")
-                    for i, prop in enumerate(properties, 1):
-                        print(f"[{i:2d}] '{prop.property_type}' - {prop.length} bytes")
-
-                        # Show decoded values for key properties
-                        if prop.property_type in ['name', 'catg', 'eMNA']:
-                            from pipl_types import decode_string
-                            decoded = decode_string(prop.data)
-                            if decoded:
-                                print(f"     → \"{decoded}\"")
-                        elif prop.property_type == 'eVER':
-                            if len(prop.data) >= 4:
-                                version_be = struct.unpack('>I', prop.data[:4])[0]
-                                print(f"     → Version: 0x{version_be:08x}")
-
-                except Exception as e:
-                    print(f"Error analyzing properties: {e}")
-
-            else:
-                print("No PIPL properties found in AEX file")
-
-            # Save raw data for debugging
-            extractor.save_extracted_data(f"{aex_file}_extracted_pipl.bin")
-
-        except Exception as e:
-            print(f"Error extracting from {aex_file}: {e}")
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 aex_resource_extractor.py <aex_file>")
-        sys.exit(1)
-
-    AexResourceExtractor.extract_from_aex(sys.argv[1])
+    # Note: Standalone CLI removed. Use via `ae_pipl_extractor.py`.

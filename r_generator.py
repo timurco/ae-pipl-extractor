@@ -4,32 +4,9 @@ import struct
 from typing import List, Dict
 from pipl_types import (
     PiplProperty, PLUGIN_KINDS, AE_OUT_FLAGS, AE_OUT_FLAGS_2,
-    decode_flags, decode_version, decode_string, decode_entry_point
+    decode_flags, decode_version, decode_string, decode_entry_point,
+    decode_effect_version
 )
-
-# Import decode_effect_version from config_analyzer
-try:
-    from config_analyzer import decode_effect_version
-except ImportError:
-    # Fallback implementation
-    def decode_effect_version(version_value: int) -> dict:
-        major = version_value // 524288
-        remainder = version_value % 524288
-        minor = remainder // 32768
-        remainder = remainder % 32768
-        bug = remainder // 2048
-        remainder = remainder % 2048
-        stage = remainder // 512
-        build = remainder % 512
-
-        return {
-            'major': major,
-            'minor': minor,
-            'bug': bug,
-            'stage': stage,
-            'build': build,
-            'full_string': f"{major}.{minor}.{bug} Build {build}"
-        }
 
 class RGenerator:
     """Generate .r resource files from PIPL properties."""
@@ -128,11 +105,11 @@ class RGenerator:
             # Effect Version
             if len(prop.data) >= 4:
                 version_raw = struct.unpack('>I', prop.data[:4])[0]
-                version_info = decode_effect_version(version_raw)
+                version_info = decode_effect_version(prop.data)
                 if version_info:
-                    return f"[{index}] AE_Effect_Version [{normalized_type}]: {version_raw:#x} // {version_info['full_string']}"
-                else:
-                    return f"[{index}] AE_Effect_Version [{normalized_type}]: {version_raw:#x} // Unrecognized Version Value"
+                    # VersionInfo implements __str__ for human-readable output
+                    return f"[{index}] AE_Effect_Version [{normalized_type}]: {version_raw:#x} // {str(version_info)}"
+                return f"[{index}] AE_Effect_Version [{normalized_type}]: {version_raw:#x} // Unrecognized Version Value"
 
         elif normalized_type == 'eINF':
             # Effect Info Flags
