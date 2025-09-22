@@ -1,1 +1,4 @@
 /target
+.claude
+__pycache__
+*.r
